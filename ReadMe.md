@@ -21,6 +21,8 @@ cd /informatik2/tams/home/deng/catkin_ws/src/Robot_grasp/graspPlanning_yuchen
 
 python training_yuchen.py
 
+test..............
+
 ### step 2: prediction with graspNet
 ...
 

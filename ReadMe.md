@@ -16,4 +16,4 @@ CUDA_VISIBLE_DEVICES=0 python training_yuchen.py
 
 CUDA_VISIBLE_DEVICES=1 python training_yuchen.py
 
-
+1215646511654

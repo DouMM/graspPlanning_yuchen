@@ -23,9 +23,10 @@ class loadDataset(object):
         #self.num_validation = 50
         self.scale = 6
         self.train_batch_size = self.config['train_batch_size']
+        self.val_batch_size = self.config['val_batch_size']
 
         self.min_dir_n = 1
-        self.max_dir_n = 12
+        self.max_dir_n = 5
         self.max_pic_n = 99
 
         self.im_height = self.config['graspcnn_config']['im_height']
@@ -145,6 +146,28 @@ class loadDataset(object):
         #print('load_Data:img_train_batch', self.obj_train_batch.shape)
         return self.img_train_batch, self.mask_train_batch, self.rec_train_batch, self.obj_train_batch
 
+    # generate vaidation dataset
+    def validation_dataset(self):
+        # 1. randomly choise form a batch
+        img_val_batch = []
+        mask_val_batch = []
+        rec_val_batch = []
+        obj_val_batch = []
+        for i in xrange(self.val_batch_size):
+            random_num = np.random.choice(self.num_validation)
+            img_val_batch.append(self.img_validation[random_num])
+            mask_val_batch.append(self.mask_validation[random_num])
+            rec_val_batch.append(self.rec_validation[random_num])
+            obj_val_batch.append(self.obj_validation[random_num])
+
+        self.rec_val_batch = np.asarray(rec_val_batch).reshape(self.val_batch_size,self.grasp_dim).astype(np.float32)
+        img_val_batch = np.asarray(img_val_batch).reshape(self.val_batch_size,self.im_channels,self.im_height,self.im_width).astype(np.float32)
+        self.img_val_batch = np.transpose(img_val_batch, (0,2,3,1))
+        self.mask_val_batch = np.asarray(mask_val_batch).reshape(self.val_batch_size, self.im_height*self.im_width).astype(np.int16)
+        self.obj_val_batch = np.asarray(obj_val_batch).reshape(self.val_batch_size, self.num_objClasses).astype(np.int16)
+        return self.img_val_batch, self.mask_val_batch, self.rec_val_batch, self.obj_val_batch
+
+
     # label preparation:
     def label_handling(self, data_label_1,data_label_2):
         '''data_label_1: file name, data_label_2: picture number '''
@@ -237,32 +260,6 @@ class loadDataset(object):
         labels = self.dense_to_one_hot(labels_flat, self.num_objClasses)
         labels = labels.astype(np.uint8)
         return labels
-
-    # generate vaidation dataset
-    def validation_dataset(self, validation_N):
-        X_validation = []
-        Y_validation = []
-
-        X,Y = self.prepare_dataset(self.min_dir_n,self.max_dir_n,self.max_pic_n)
-
-        indexes = np.random.permutation(len(X))
-
-        for i in range(validation_N):
-            X_validation.append(X[indexes[i]])
-            Y_validation.append(Y[indexes[i]])
-
-        X_validation = np.array(X_validation, dtype = np.float32)
-        Y_validation = np.array(Y_validation)
-
-        print " "
-        print "loaded validation dataset"
-        print "directory: " + str(self.min_dir_n) +"-"+ str(self.max_dir_n) + " picture: 0-" + str(self.max_pic_n)
-        print "total data amount: " + str(len(X))
-
-        print "validation_N: " + str(len(X_validation))
-        print " "
-
-        return X_validation,Y_validation
 
 
     def dense_to_one_hot(self, labels_dense, num_classes):

@@ -85,11 +85,12 @@ class SGDOptimizer(object):
         # 4. optimization
         num_epochs = 2
         num_batches = 5
-        optimize_obj = False
-        optimize_grasp = True
+        self.num_batches_val = 2
+        optimize_obj = True
+        optimize_grasp = False
         optimize_mask = False
         for i in xrange(num_epochs):
-            print('------------------next epoch:', i, 'in', num_epochs)
+            print('------------------Run epoch:', i, 'in', num_epochs)
             if optimize_obj == True:
                 for step_obj in xrange(num_batches):
                     # 1. load minibatch train set.
@@ -109,6 +110,13 @@ class SGDOptimizer(object):
                     sys.stdout.flush()
                     self.graspcnn.save_scalar(num_batches*i+step_obj, 'train/loss_obj', loss_obj, self.writer)
                     self.graspcnn.save_scalar(num_batches*i+step_obj, 'train/obj_learningRate', learning_rate, self.writer)
+
+                    # 4. evaluate
+                    if step_obj == num_batches-1:
+                        valerror_obj = self.errorrate_obj_valbatch()
+                        self.graspcnn.save_scalar(i, 'val/valerror_obj', valerror_obj, self.writer)
+                        logging.info(' object recognition: val/valerror_obj: %.3f' % (valerror_obj))
+
             if optimize_grasp == True:
                 for step_grasp in xrange(num_batches):
                     # 1. load minibatch train set.
@@ -128,6 +136,12 @@ class SGDOptimizer(object):
                     sys.stdout.flush()
                     self.graspcnn.save_scalar(num_batches*i+step_grasp, 'train/loss_grasp', loss_grasp, self.writer)
                     self.graspcnn.save_scalar(num_batches*i+step_grasp, 'train/grasp_learningRate', learning_rate, self.writer)
+                    # 4. evaluate
+                    if step_grasp == num_batches-1:
+                        valerror_grasp = self.errorrate_grasp_valbatch()
+                        self.graspcnn.save_scalar(i, 'val/valerror_grasp', valerror_grasp, self.writer)
+                        logging.info(' object recognition: val/valerror_grasp: %.3f' % (valerror_grasp))
+
             if optimize_mask == True:
                 for step_mask in xrange(num_batches):#for step in training_range: #training_range = 59375
                     # 1. load minibatch train set.
@@ -148,6 +162,13 @@ class SGDOptimizer(object):
                     sys.stdout.flush()
                     self.graspcnn.save_scalar(num_batches*i+step_mask, 'train/loss_mask', loss_mask, self.writer)
                     self.graspcnn.save_scalar(num_batches*i+step_mask, 'train/mask_learningRate', learning_rate, self.writer)
+                    # 4. evaluate
+                    if step_mask == num_batches-1:
+                        valerror_mask = self.errorrate_mask_valbatch()
+                        self.graspcnn.save_scalar(i, 'val/valerror_mask', valerror_mask, self.writer)
+                        logging.info(' object recognition: val/valerror_mask: %.3f' % (valerror_mask))
+
+
             # launch tensorboard only after the first iteration
             if not self.tensorboard_has_launched:
             	self.tensorboard_has_launched = True
@@ -176,6 +197,60 @@ class SGDOptimizer(object):
         self._copy_config()
         # 3.read  training parameters from config file
         self._read_training_params()
+
+    def errorrate_obj_valbatch(self):
+        '''run model in a validation batch'''
+        error_rates = []
+        for step in xrange(self.num_batches_val):
+            # 1. load minibatch train set.
+            img_val_batch, mask_val_batch, rec_val_batch, obj_val_batch = self.loadDataset_obj.validation_dataset()
+
+            # 2. prediction with graspNet
+            predict_obj= self.sess.run(self.graspcnn.output_obj,feed_dict={self.graspcnn.inputs: img_val_batch,
+                                                self.graspcnn.dropout_keep_prob: self.graspcnn._dropout_keep_prob},
+                                                options=GeneralConstants.timeout_option)
+            # 3. compute error rate.(classfic problem)
+            error_rate = 100 -(100*np.sum(predict_obj == obj_val_batch)/predict_obj.shape[0])
+            error_rates.append(error_rate)
+        print('evaluate:output_obj', predict_obj.shape, predict_obj[0])
+        return np.mean(error_rates)
+
+    def errorrate_grasp_valbatch(self):
+        '''run model in a validation batch'''
+        error_rates = []
+        for step in xrange(self.num_batches_val):
+            # 1. load minibatch train set.
+            img_val_batch, mask_val_batch, rec_val_batch, obj_val_batch = self.loadDataset_obj.validation_dataset()
+
+            # 2. prediction with graspNet
+            predict_grasp = self.sess.run(self.graspcnn.output_grasp,feed_dict={self.graspcnn.inputs: img_val_batch,
+                                                self.graspcnn.dropout_keep_prob: self.graspcnn._dropout_keep_prob},
+                                                options=GeneralConstants.timeout_option)
+
+            # 3. compute error rate.(classfic problem)
+            error_rate = 100 -(100*np.sum(predict_obj == obj_val_batch)/predict_obj.shape[0]) #??????????????????????????????????
+            error_rates.append(error_rate)
+        print('evaluate:predict_grasp', predict_grasp.shape, predict_grasp[0])
+        return np.mean(error_rates)
+
+    def errorrate_mask_valbatch(self):
+        '''run model in a validation batch'''
+        error_rates = []
+        for step in xrange(self.num_batches_val):
+            # 1. load minibatch train set.
+            img_val_batch, mask_val_batch, rec_val_batch, obj_val_batch = self.loadDataset_obj.validation_dataset()
+
+            # 2. prediction with graspNet
+            predict_mask = self.sess.run(self.graspcnn.output_mask,feed_dict={self.graspcnn.inputs: img_val_batch,
+                                                self.graspcnn.dropout_keep_prob: self.graspcnn._dropout_keep_prob},
+                                                options=GeneralConstants.timeout_option)
+
+            # 3. compute error rate.(classfic problem)
+            error_rate = 100 -(100*np.sum(predict_obj == obj_val_batch)/predict_obj.shape[0]) #??????????????????????????????????
+            error_rates.append(error_rate)
+        print('evaluate:predict_mask', predict_mask.shape, predict_mask[0])
+        return np.mean(error_rates)
+
 
     def _read_training_params(self):
         """ Read training parameters from configuration file """

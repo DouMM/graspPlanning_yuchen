@@ -20,17 +20,30 @@ from graspNet.learning_analysis_yuchen import ClassificationResult, RegressionRe
 from graspNet.optimizer_constants_yuchen import ImageMode, TrainingMode, PreprocMode, InputDataMode, GeneralConstants, ImageFileTemplates
 from graspNet.train_stats_logger_yuchen import TrainStatsLogger
 
-class SGDOptimizer(object):
-    def __init__(self, graspcnn, loadDataset, config):
-        self.graspcnn = graspcnn
-        self.loadDataset_obj = loadDataset
-        self.cfg = config
-        self.tensorboard_has_launched = False
+# general optimization parameters
+train_batch_size: 64
+val_batch_size: 64
 
-    def _setup_tensorflow(self):
-        """Setup tf: grasp, session, and summary """
-        tf.reset_default_graph()
-        # 1. create graspNet
+data_split_mode: image_wise # how to split up the data into training vs validation: options are image_wise, stable_pose_wise, object_wise
+train_pct: 0.8 # percentage of the data to use for training vs validation
+total_pct: 1.0 # percentage of all the files to use
+eval_total_train_error: 0
+
+loss: l2
+optimizer: rmsprop
+base_lr: 0.001
+decay_step_multiplier: 0.8   # number of times to go through training datapoints before stepping down decay rate
+decay_rate: 0.96
+momentum_rate: 0.9
+
+### GQCNN CONFIG ###
+graspcnn_config:
+  # basic data metrics
+  im_height: 50
+  im_width: 50
+  im_channels: 3
+  # needs to match input data mode that was used for training, determines the pose dimensions for the network
+  input_data_mode: yuchen_pose_mode
         self.graspcnn.initialize_network_alexnet()
 
         # 2. create optimizer
@@ -58,11 +71,31 @@ class SGDOptimizer(object):
         # 3. start tf.session.
         init = tf.global_variables_initializer()
         self.config = tf.ConfigProto() # set config for Session
-        self.config.gpu_options.allow_growth = True
-        self.config.allow_soft_placement = True # allow TF to find device
-        self.sess = tf.Session(config = self.config)
-        self.sess.run(init)
-        self.saver = tf.train.Saver()
+        self.config.gpu_options.
+# general optimization parameters
+train_batch_size: 64
+val_batch_size: 64
+
+data_split_mode: image_wise # how to split up the data into training vs validation: options are image_wise, stable_pose_wise, object_wise
+train_pct: 0.8 # percentage of the data to use for training vs validation
+total_pct: 1.0 # percentage of all the files to use
+eval_total_train_error: 0
+
+loss: l2
+optimizer: rmsprop
+base_lr: 0.001
+decay_step_multiplier: 0.8   # number of times to go through training datapoints before stepping down decay rate
+decay_rate: 0.96
+momentum_rate: 0.9
+
+### GQCNN CONFIG ###
+graspcnn_config:
+  # basic data metrics
+  im_height: 50
+  im_width: 50
+  im_channels: 3
+  # needs to match input data mode that was used for training, determines the pose dimensions for the network
+  input_data_mode: yuchen_pose_modever()
         self.writer = tf.summary.FileWriter(self.summary_dir, self.sess.graph)
         logging.info('start session!!!')
 
@@ -83,8 +116,8 @@ class SGDOptimizer(object):
         self._setup_tensorflow()
 
         # 4. optimization
-        num_epochs = 2
-        num_batches = 5
+        num_epochs = 200
+        num_batches = 300
         self.num_batches_val = 2
         optimize_obj = True
         optimize_grasp = False
@@ -112,10 +145,12 @@ class SGDOptimizer(object):
                     self.graspcnn.save_scalar(num_batches*i+step_obj, 'train/obj_learningRate', learning_rate, self.writer)
 
                     # 4. evaluate
+                    '''
                     if step_obj == num_batches-1:
                         valerror_obj = self.errorrate_obj_valbatch()
                         self.graspcnn.save_scalar(i, 'val/valerror_obj', valerror_obj, self.writer)
                         logging.info(' object recognition: val/valerror_obj: %.3f' % (valerror_obj))
+                    '''
 
             if optimize_grasp == True:
                 for step_grasp in xrange(num_batches):

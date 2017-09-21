@@ -16,6 +16,11 @@ CUDA_VISIBLE_DEVICES=0 python training_yuchen.py
 
 CUDA_VISIBLE_DEVICES=1 python training_yuchen.py
 
+----
+cd /informatik2/tams/home/deng/catkin_ws/src/Robot_grasp/graspPlanning_yuchen
+
+python training_yuchen.py
+
 ### step 2: prediction with graspNet
 ...
 

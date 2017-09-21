@@ -26,7 +26,7 @@ class loadDataset(object):
         self.val_batch_size = self.config['val_batch_size']
 
         self.min_dir_n = 1
-        self.max_dir_n = 5
+        self.max_dir_n = 30
         self.max_pic_n = 99
 
         self.im_height = self.config['graspcnn_config']['im_height']

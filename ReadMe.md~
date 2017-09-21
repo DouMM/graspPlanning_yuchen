@@ -17,3 +17,11 @@ CUDA_VISIBLE_DEVICES=0 python training_yuchen.py
 CUDA_VISIBLE_DEVICES=1 python training_yuchen.py
 
 
+tangsong====
+tttttttttttt
+
+### step 2: prediction with graspNet
+...
+
+### step 3: Analysis with graspNet
+...

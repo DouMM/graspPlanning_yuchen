@@ -3,10 +3,12 @@
 
 ### step１: training graspNet network
 ssh tams144
-source /opt/ros/indigo/setup.bash
-cd catkin_ws
-source devel/setup.bash
 
+source /opt/ros/indigo/setup.bash
+
+cd catkin_ws
+
+source devel/setup.bash
 
 cd /informatik2/tams/home/deng/catkin_ws/src/Robot_grasp/graspPlanning_yuchen
 
